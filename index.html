@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kateaw</title>
+
+    <!-- 1. Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <!-- 2. Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#0066ff',
+                            cyan: '#00f2ff',
+                            dark: '#05051a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- 3. AOS Animation Library CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
+    <style>
+        /* Custom Styles บางส่วนที่ Tailwind จัดการได้ยาก */
+        body {
+            background-color: #020205;
+        }
+
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -2;
+            background: radial-gradient(circle at center, #0a0a2e 0%, #000000 100%);
+        }
+
+        /* Overlay สำหรับทำ Effect มืดลงเมื่อเลื่อนหน้าจอ */
+        #bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background-color: rgba(0, 0, 0, 0);
+            pointer-events: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgba(0, 242, 255, 0.5);
+        }
+
+        .stroke-text {
+            -webkit-text-stroke: 1px #00f2ff;
+            color: transparent;
+        }
+
+        /* ซ่อน Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #020205;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #0066ff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="text-white overflow-x-hidden antialiased">
+
+    <!-- Background Libraries -->
+    <div id="particles-js"></div>
+    <div id="bg-overlay"></div>
+
+    <!-- Navigation -->
+    <nav id="navbar"
+        class="fixed w-full z-50 transition-all duration-300 py-5 px-6 md:px-12 flex justify-between items-center">
+        <div class="text-2xl font-bold tracking-widest uppercase">
+            Ka<span class="text-brand-blue">Teaw</span>
+        </div>
+
+        <!-- Desktop Menu -->
+        <ul class="hidden md:flex space-x-8">
+            <li><a href="#home"
+                    class="hover:text-brand-cyan transition duration-300 border-b-2 border-transparent hover:border-brand-cyan pb-1">หน้าหลัก</a>
+            </li>
+            <li><a href="#about"
+                    class="hover:text-brand-cyan transition duration-300 border-b-2 border-transparent hover:border-brand-cyan pb-1">เกี่ยวกับฉัน</a>
+            </li>
+            <li><a href="#portfolio"
+                    class="hover:text-brand-cyan transition duration-300 border-b-2 border-transparent hover:border-brand-cyan pb-1">ผลงาน</a>
+            </li>
+            <li><a href="#Certificates"
+                    class="hover:text-brand-cyan transition duration-300 border-b-2 border-transparent hover:border-brand-cyan pb-1">การแข่งขันและเกียรติบัตร</a>
+            </li>
+            <li><a href="#contact"
+                    class="hover:text-brand-cyan transition duration-300 border-b-2 border-transparent hover:border-brand-cyan pb-1">ติดต่อ</a>
+            </li>
+        </ul>
+
+        <!-- Mobile Menu Button -->
+        <button id="menu-btn" class="md:hidden text-2xl focus:outline-none">
+            &#9776;
+        </button>
+
+        <!-- Mobile Menu Overlay -->
+        <div id="mobile-menu"
+            class="fixed inset-0 bg-black/95 backdrop-blur-xl z-40 transform translate-x-full transition-transform duration-300 flex flex-col justify-center items-center space-y-8 md:hidden">
+            <button id="close-menu" class="absolute top-6 right-6 text-4xl">&times;</button>
+            <a href="#home" class="text-2xl font-semibold hover:text-brand-cyan mobile-link">หน้าหลัก</a>
+            <a href="#about" class="text-2xl font-semibold hover:text-brand-cyan mobile-link">เกี่ยวกับฉัน</a>
+            <a href="#portfolio" class="text-2xl font-semibold hover:text-brand-cyan mobile-link">ผลงาน</a>
+            <a href="#contact" class="text-2xl font-semibold hover:text-brand-cyan mobile-link">ติดต่อ</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header id="home" class="h-screen flex flex-col justify-center items-center text-center px-4 relative">
+        <div data-aos="zoom-in" data-aos-duration="1000">
+            <h1 class="text-5xl md:text-7xl font-bold mb-4 leading-tight">
+                welcome to<br>
+                <span class="stroke-text block mt-2">Kateaw</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-8 font-light">
+                "เทคโนโลยีก้าวหน้า พัฒนาเพื่อเรียนรู้ และทำเพื่อสร้างสรรค์สิ่งใหม่ๆ"
+            </p>
+            <a href="#portfolio"
+                class="inline-block px-8 py-3 rounded-full bg-gradient-to-r from-brand-blue to-blue-800 text-white font-semibold shadow-lg shadow-brand-blue/30 hover:shadow-brand-cyan/50 hover:scale-105 transition transform duration-300 border border-transparent hover:border-brand-cyan">
+                ดูผลงานของฉัน
+            </a>
+        </div>
+
+        <!-- Scroll Indicator -->
+        <div class="absolute bottom-10 animate-bounce opacity-70">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3">
+                </path>
+            </svg>
+        </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="py-24 px-6 relative z-10">
+        <div class="container mx-auto max-w-5xl">
+            <h2 class="text-4xl font-bold text-center mb-16 relative" data-aos="fade-up">
+                เกี่ยวกับฉัน
+                <span class="block w-20 h-1 bg-brand-blue mx-auto mt-4 rounded-full"></span>
+            </h2>
+
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="w-full md:w-1/3 flex justify-center" data-aos="fade-right">
+                    <div
+                        class="w-64 h-64 rounded-2xl bg-gradient-to-br from-gray-800 to-black border-2 border-brand-blue flex items-center justify-center shadow-[0_0_30px_rgba(0,102,255,0.3)] relative overflow-hidden group">
+                        <img src="Picture/Profile/Jiranuwat.png"" class=" w-full h-full object-cover">
+                    </div>
+                </div>
+
+                <div class="w-full md:w-2/3" data-aos="fade-left">
+                    <h3 class="text-2xl text-brand-cyan font-semibold mb-4">จิรานุวัฒน์ ศรีทับทิม</h3>
+                    <p class="text-gray-300 leading-relaxed mb-6 font-light">
+                        สวัสดีครับผมจิรานุวัฒน์ ศรีทับทิม นักเรียนโรงเรียนนนทบุรีวิทยาลัย
+                        ปัจจุบันกำลังศึกษาอยู่ระดับชั้นมัธยมศึกษาปีที่ 5/3
+                        มีความชอบด้านคอมพิวเตอร์และหุ่นยนต์ เคยมีประสบการณ์
+                        การเข้าร่วมแข่งขันต่าง ๆ เพื่อพัฒนาความรู้และความสามารถ
+                        ปัจจุบันกำลังทำโครงการพัฒนาเว็บไซต์สำหรับการใช้งานในโรงเรียน
+                        สามารถเข้าถึงข้อมูลและระบบทั้งหมดของโรงเรียนได้
+                        สามารถติดตามการพัฒนาโครงการนี้ได้ที่
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div
+                            class="bg-white/5 p-4 rounded-lg border border-white/10 hover:border-brand-blue transition">
+                            <span class="text-brand-blue font-bold text-xl block">Langauge</span>
+                            <span class="text-sm text-gray-400">Python , C , C++ , C# , HTML , CSS , JavaScript , PHP</span>
+                        </div>
+                        <a href="https://github.com/kateaw09" target="_blank"
+                            class="bg-white/5 p-4 rounded-lg border border-white/10 hover:border-brand-blue transition">
+                            <span class="text-brand-blue font-bold text-xl block">Github</span>
+                            <span class="text-sm text-gray-400">kateaw09</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Portfolio Section -->
+    <section id="portfolio" class="py-24 px-6 relative z-10 bg-black/20 backdrop-blur-sm">
+        <div class="container mx-auto max-w-6xl">
+            <h2 class="text-4xl font-bold text-center mb-16" data-aos="fade-up">
+                ผลงานล่าสุด
+                <span class="block w-20 h-1 bg-brand-blue mx-auto mt-4 rounded-full"></span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Project 3 -->
+                <a href="" target="_blank" class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        Roblox Game - ST Project
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">แมพภายในเกม Roblox <span class="text-blue-500 underline">[กำลังพัฒนา]</span></h3>
+                        <p class="text-gray-400 text-sm mb-4">มินิเกมการแก้ไขปัญหาแนว Story</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Roblox</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Lua</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Project 3 -->
+                <a href="https://sc.non.ac.th/SMS/" target="_blank" class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <iframe src="https://sc.non.ac.th/SMS" frameborder="0" scrolling="no" style="width: 100%; height: 100%;"></iframe>
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">ระบบแสกนใบหน้าลงเวลา แทนการเช็คชื่อ Project SFR-Project <span class="text-blue-500 underline">[กำลังพัฒนา]</span></h3>
+                        <p class="text-gray-400 text-sm mb-4">โครงการสำหรับยกระดับโรง้รียน เพื่อความปลอดภัยและลดความผิดพาดสำหรับโรงเรียนนนทบุรีวทิยาลัย พัฒนาร่วมกับทีมงาน SFRP</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Web Application</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">School Management System</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Project 2 -->
+                <a href="https://sc.non.ac.th/SMS/" target="_blank" class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <iframe src="https://sc.non.ac.th/SCS" frameborder="0" scrolling="no" style="width: 100%; height: 100%;"></iframe>
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">ระบบบริหารจัดการสถานศึกษาสำหรับโรงเรียนนนทบุรีวิทยาลัย <span class="text-blue-500 underline">[กำลังพัฒนา]</span></h3>
+                        <p class="text-gray-400 text-sm mb-4">สร้างเว็บแอปพลิเคชั่นบริหารจัดการสำหรับโรงเรียนนนทบุรีวทิยาลัย สำหรับการจัดการข้อมูลและอื่น ๆ ของโรงเรียน</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Web Application</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">School Management System</span>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Project 1 -->
+                <a href="https://sc.non.ac.th/" target="_blank" class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <iframe src="https://sc.non.ac.th/public/home" frameborder="0" scrolling="no" style="width: 100%; height: 100%;"></iframe>
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">เว็บไซต์สภานักเรียน โรงเรียนนนทบุรีวทิยาลัย</h3>
+                        <p class="text-gray-400 text-sm mb-4">สร้างเว็บไซต์ของสภานักเรียนโรงเรียนนนทบุรีวทิยาลัย สำหรับการแจ้งข่าวสารและข้อมูลอื่น ๆ ของโรงเรียน</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Website</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Student Council</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Certificates Section -->
+    <section id="Certificates" class="py-24 px-6 relative z-10 bg-black/20 backdrop-blur-sm">
+        <div class="container mx-auto max-w-6xl">
+            <h2 class="text-4xl font-bold text-center mb-16" data-aos="fade-up">
+                เกียรติบัตร
+                <span class="block w-20 h-1 bg-brand-blue mx-auto mt-4 rounded-full"></span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Certificates 14 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/CodingThailand2025/Image-Processing.png" alt="Image Processing">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">Coding Thailand 2025 - AI Driven Future [Image Processing Yolo Media Pipe]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การอบรม Image Processing Yolo Media Pipe โครงการ Coding Thailand 2025 - AI Driven Future
+                            (ออนไลน์)
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Image</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Camera</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">AI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 13 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/CodingThailand2025/Basic-EdgeAI.png" alt="Edge AI">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">Coding Thailand 2025 - AI Driven Future [เทคโนโลยีปัญญาประดิษฐ์สุดขอบ Edge AI]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การอบรมเทคโนโลยีปัญญาประดิษฐ์สุดขอบ Edge AI โครงการ Coding Thailand 2025 - AI Driven Future
+                            (ออนไลน์)
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Edge AI</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">AI</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 12 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/CodingThailand2025/Arduino-Nano.png" alt="Microcontroller Arduino Nano Esp32 Micropython">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">Coding Thailand 2025 - AI Driven Future [Microcontroller Arduino Nano Esp32 Micropython]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การอบรม Microcontroller Arduino Nano Esp32 Micropython โครงการ Coding Thailand 2025 - AI Driven Future
+                            (ออนไลน์)
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Microcontroller</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Arduino</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Arduino Nano</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Esp32</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Micropython</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 11 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/CodingThailand2025/AI-Data-Analytics.png" alt="Data Analytics">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">Coding Thailand 2025 - AI Driven Future [พื้นฐาน Data Analytics]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การอบรมพื้นฐาน Data Analytic โครงการ Coding Thailand 2025 - AI Driven Future
+                            (ออนไลน์)
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Data</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Data Analytic</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 10 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/OPT-2025/OPT-Robot2025.png" alt="หุ่นยนต์มัธยมปลาย">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">งานแข่งขันทักษะทางวิชาการระดับภาคกลาง ครั้งที่ 18 [การประกวดแข่งขันหุ่นยนต์ ม.4-ม.6]</h3>
+                        <p class="text-gray-400 text-sm mb-4">รายการแข่งขันหุ่นยนต์ ระดับมัธยมปลาย โครงการงานแข่งขันทักษะทางวิชาการระดับภาคกลาง ครั้งที่ 18 ณ เทศบาลนครนนทบุรี ประจำปีการศึกษา 2568
+                            มหาวิทยาลัยเทคโนโลยี ราชมงคลสุวรรณภูมิ ศูนย์นนทบุรี เขตใต้ ชั้น 3 ห้อง ห้อง SCI 310232 แข่งขันเมื่อวันที่ 1 กรกฎาคม 2568 ได้รับรางวัล <span class="text-blue-500 underline">เหรียญทองแดง ชมเชย</span>
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">C</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Arduino</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Robot</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 9 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/SPT2025/SPTC.png" alt="หุ่นยนต์ขนส่งถุงยังชีพ">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">ศิลปหัตถกรรมครั้งที่ 72 [หุ่นยนต์ขนส่งถุงยังชีพ-ระดับกลาง]</h3>
+                        <p class="text-gray-400 text-sm mb-4">รายการแข่งขันหุ่นยนต์ขนส่งถุงยังชีพ (ระดับกลาง) โครงการศิลปหัตถกรรมนักเรียนครั้งที่ 72 [สพม. นนทบุรี]
+                            ณ โรงเรียนสวนกุหลาบวิทยาลัย นนทบุรี แข่งขันเมื่อวันที่ 17 มกราคม 2568 ได้รับรางวัล <span class="text-blue-500 underline">เหรียญทอง ชนะเลิศ</span>
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">C</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Arduino</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Robot</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 8 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="300">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/Thaimooc/Thaimooc.png" alt="Thaimooc-Certificate">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-7">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">การเขียนโปรแกรมคอมพิวเตอร์พื้นฐาน ด้วยภาษาซี 1 [Thaimooc]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การเรียนรู้ภาษาซีเพื่อการพัฒนาโปแกรมขั้นพื้นฐาน ให้ไว้ ณ วันที่ 10 มกราคม 2568</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">C</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Thaimooc</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 6 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="100">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/habormor-robot2024/PT_BOT.jpg" alt="หุ่นยนต์เดินตามเส้น">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">Habormall Robot Challenge 2024 [หุ่นยนต์ อัตโนมัติ อปท. มัธยมปลาย - เดินตามเส้น]</h3>
+                        <p class="text-gray-400 text-sm mb-4">
+                            รายการแข่งขันหุ่นยนต์อัตโนมัติ ภายใต้หุ่นยนต์รายการแข่งขันองค์กรณ์ปกครองส่วนท้องถิ่น โครงการ "HaborMall Robot Challenge 2024"
+                            ณ ศูนย์การค้า HaborMall จังหวัดชลบุรี แข่งขันเมื่อวันที่ 14 ธันวาคม 2567 ได้รับรางวัล <span class="text-blue-500 underline">รองชนะเลิศอันดับ 1</span>
+                        </p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">C</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Arduino</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Robot</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 5 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/Codecombat/Certificate-CodeCombat4.png" alt="CS4-ESAN-Code2024">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">วิทยาการคอมพิวเตอร์ 4 - CodecomBat [ภายใต้โครงการ ESAN-Code 2024]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การเรียนรู้เนื้อหาวิทยาการคอมพิวเตอร์ 4 เพื่อคัดเลือกผู้แข่งโครงการ ESAN-Code 2024</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Python</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">CodeCombat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 4 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/Codecombat/Certificate-CodeCombat3.png" alt="CS3-ESAN-Code2024">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">วิทยาการคอมพิวเตอร์ 3 - CodecomBat [ภายใต้โครงการ ESAN-Code 2024]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การเรียนรู้เนื้อหาวิทยาการคอมพิวเตอร์ 3 เพื่อคัดเลือกผู้แข่งโครงการ ESAN-Code 2024</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Python</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">CodeCombat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 3 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/Codecombat/Certificate-CodeCombat2.png" alt="CS2-ESAN-Code2024">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">วิทยาการคอมพิวเตอร์ 2 - CodecomBat [ภายใต้โครงการ ESAN-Code 2024]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การเรียนรู้เนื้อหาวิทยาการคอมพิวเตอร์ 2 เพื่อคัดเลือกผู้แข่งโครงการ ESAN-Code 2024</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Python</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">CodeCombat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 2 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/Codecombat/Certificate-CodeCombat1.png" alt="CS1-ESAN-Code2024">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">วิทยาการคอมพิวเตอร์ 1 - CodecomBat [ภายใต้โครงการ ESAN-Code 2024]</h3>
+                        <p class="text-gray-400 text-sm mb-4">การเรียนรู้เนื้อหาวิทยาการคอมพิวเตอร์ 1 เพื่อคัดเลือกผู้แข่งโครงการ ESAN-Code 2024</p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Python</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">CodeCombat</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Certificates 1 -->
+                <div class="group bg-white/5 rounded-2xl overflow-hidden border border-white/10 hover:border-brand-blue transition duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/20"
+                    data-aos="fade-up" data-aos-delay="200">
+                    <div
+                        class="h-48 bg-gray-900 flex items-center justify-center text-gray-600 relative overflow-hidden">
+                        <img src="Picture/Certificate/ESAN-Code2024/ETPCA-S0226.png" alt="ESAN-Code2024">
+                        <div
+                            class="absolute inset-0 bg-brand-blue/20 translate-y-full group-hover:translate-y-0 transition duration-300">
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold mb-2 group-hover:text-brand-cyan transition">ESAN-Coding 2024</h3>
+                        <p class="text-gray-400 text-sm mb-4">รายการแข่งขัน ESAN-Coding เกี่ยวกับการแก้ปัญหาด้วยคอมพิวเตอร์ตามหัวข้อที่ได้โดยฝึกฝนในแพลตฟอม 
+                            CodeComBat และเป็นบททดสอบในการผ่านการคัดเลือกในรอบแรก และในรอบต่อมาเกี่ยวกับการเลือกหัสข้อที่สนใจเพื่อทำโครงงานในหัวข้อนั้นส่ง ได้รับรางวัล <span class="text-blue-500 underline">The 1st Round: Basic STEM, Coding and Al : Intermediate</span></p>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Python</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">CodeCombat</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">STEM</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">Coding</span>
+                            <span class="px-3 py-1 bg-brand-blue/20 text-brand-cyan text-xs rounded-full">AI</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="py-24 px-6 relative z-10 flex flex-col justify-center items-center min-h-[60vh]">
+        <div class="text-center max-w-3xl" data-aos="zoom-in">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">ติดต่อ Kateaw</h2>
+            <div class="w-24 h-1 bg-brand-blue mx-auto mb-8 rounded-full"></div>
+            <p class="text-gray-300 text-lg mb-10 font-light">
+                หากคุณต้องการติดต่อเราเพื่อพัฒนาโปรเจกต์ร่วมกันสามารถติดต่อได้ที่
+            </p>
+            <a href="mailto:jiranuwat.sritabtim@gmail.com"
+                class="inline-block px-10 py-4 bg-brand-blue hover:bg-brand-cyan text-white hover:text-black font-bold rounded-full transition duration-300 shadow-lg shadow-brand-blue/40 transform hover:scale-105">
+                Email : jiranuwat.sritabtim@gmail.com
+            </a>
+        </div>
+    </section>
+
+    <footer class="py-8 text-center text-gray-500 text-sm bg-black relative z-10 border-t border-white/10">
+        &copy; 2025 Kateaw. Portfolio & Kateaw web All Rights Reserved.
+    </footer>
+
+    <!-- Scripts -->
+
+    <!-- 4. Particles.js Library -->
+    <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
+
+    <!-- 5. AOS Library -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        // Initialize AOS (Animation On Scroll)
+        AOS.init({
+            once: false,
+            offset: 100,
+            duration: 800,
+            easing: 'ease-out-cubic',
+        });
+
+        // Initialize Particles.js (Background)
+        particlesJS("particles-js", {
+            "particles": {
+                "number": { "value": 80, "density": { "enable": true, "value_area": 800 } },
+                "color": { "value": "#0066ff" },
+                "shape": { "type": "circle" },
+                "opacity": { "value": 0.5, "random": true },
+                "size": { "value": 3, "random": true },
+                "line_linked": {
+                    "enable": true,
+                    "distance": 150,
+                    "color": "#0066ff",
+                    "opacity": 0.4,
+                    "width": 1
+                },
+                "move": {
+                    "enable": true,
+                    "speed": 2,
+                    "direction": "none",
+                    "random": false,
+                    "straight": false,
+                    "out_mode": "out",
+                    "bounce": false
+                }
+            },
+            "interactivity": {
+                "detect_on": "canvas",
+                "events": {
+                    "onhover": { "enable": true, "mode": "grab" },
+                    "onclick": { "enable": true, "mode": "push" },
+                    "resize": true
+                },
+                "modes": {
+                    "grab": { "distance": 140, "line_linked": { "opacity": 1 } }
+                }
+            },
+            "retina_detect": true
+        });
+
+        // Navbar & Background Scroll Effect
+        const navbar = document.getElementById('navbar');
+        const bgOverlay = document.getElementById('bg-overlay');
+        const heroHeight = document.getElementById('home').offsetHeight;
+
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY;
+
+            if (scrollY > 50) {
+                navbar.classList.add('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'shadow-brand-blue/10');
+                navbar.classList.remove('py-5');
+                navbar.classList.add('py-3');
+            } else {
+                navbar.classList.remove('bg-black/80', 'backdrop-blur-md', 'shadow-lg', 'shadow-brand-blue/10');
+                navbar.classList.remove('py-3');
+                navbar.classList.add('py-5');
+            }
+
+            let opacity = 0;
+            const startFade = heroHeight * 0.2;
+            const endFade = heroHeight * 0.9;
+
+            if (scrollY > startFade) {
+                opacity = Math.min((scrollY - startFade) / (endFade - startFade), 0.95);
+            }
+
+            bgOverlay.style.backgroundColor = `rgba(2, 2, 5, ${opacity})`;
+
+            if (opacity > 0) {
+                bgOverlay.style.backdropFilter = `blur(${opacity * 5}px)`;
+            } else {
+                bgOverlay.style.backdropFilter = 'none';
+            }
+        });
+
+        // Mobile Menu Logic
+        const menuBtn = document.getElementById('menu-btn');
+        const closeMenu = document.getElementById('close-menu');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const mobileLinks = document.querySelectorAll('.mobile-link');
+
+        function toggleMenu() {
+            const isClosed = mobileMenu.classList.contains('translate-x-full');
+            if (isClosed) {
+                mobileMenu.classList.remove('translate-x-full');
+            } else {
+                mobileMenu.classList.add('translate-x-full');
+            }
+        }
+
+        menuBtn.addEventListener('click', toggleMenu);
+        closeMenu.addEventListener('click', toggleMenu);
+
+        mobileLinks.forEach(link => {
+            link.addEventListener('click', toggleMenu);
+        });
+
+    </script>
+</body>
+
+</html>
