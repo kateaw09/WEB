@@ -1,6 +1,6 @@
 <html>
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Kateaw AR : For Get Me Not 2025</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -8,27 +8,31 @@
     @import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
     body, html {
-      margin: 0; padding: 0; overflow: hidden; width: 100vw; height: 100vh; background: black;
+      margin: 0; padding: 0; 
+      /* ใช้ position fixed ล็อคขนาดให้เท่าจอเป๊ะๆ ป้องกันแถบเว็บมือถือดันหน้าจอ */
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+      overflow: hidden; background: black;
     }
 
     * { font-family: 'Prompt', sans-serif; }
 
     #overlay-container {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 10;
     }
 
-    /* ใช้รูปแผ่นเดียวให้เต็มจอไปเลย */
+    /* บังคับให้รูปยืดพอดีจอ ไม่มีทางตกขอบ */
     #overlay-img {
-      width: 100%; height: 100%; object-fit: cover;
+      width: 100%; height: 100%; 
     }
 
     #ui-container {
       position: absolute;
-      bottom: 30px; left: 50%;
-      transform: translateX(-50%);
-      z-index: 20;
+      /* เผื่อพื้นที่ให้ขอบจอล่างของ iPhone (Safe Area) */
+      bottom: max(30px, env(safe-area-inset-bottom)); 
+      left: 50%; transform: translateX(-50%);
+      z-index: 20; width: 100%; text-align: center;
+      pointer-events: none;
     }
 
     #recordBtn {
@@ -37,6 +41,19 @@
       color: white; border: none; cursor: pointer;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
       transition: opacity 0.3s;
+      pointer-events: auto; /* เปิดให้ปุ่มนี้ถูกกดได้ */
+    }
+
+    /* ปุ่มสลับกล้อง มุมขวาบน */
+    #cameraSwitchBtn {
+      position: absolute;
+      top: max(20px, env(safe-area-inset-top)); 
+      right: 20px; z-index: 30;
+      width: 45px; height: 45px; border-radius: 50%;
+      background: rgba(0,0,0,0.6); border: 2px solid white; color: white;
+      font-size: 20px; cursor: pointer; 
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
     }
   </style>
 </head>
@@ -63,6 +80,8 @@
   <div id="ui-container">
     <button id="recordBtn">🔴 เริ่มบันทึก</button>
   </div>
+  
+  <button id="cameraSwitchBtn">🔄</button>
 
   <script>
     const video = document.querySelector('#myVideo');
@@ -77,6 +96,15 @@
     targetEntity.addEventListener("targetFound", event => { video.play(); });
     targetEntity.addEventListener("targetLost", event => { video.pause(); });
 
+    // --- ระบบสลับกล้อง ---
+    document.getElementById('cameraSwitchBtn').addEventListener('click', () => {
+      const sceneEl = document.querySelector('a-scene');
+      const arSystem = sceneEl.systems["mindar-image-system"];
+      if (arSystem) {
+        arSystem.switchCamera();
+      }
+    });
+
     const recordBtn = document.getElementById('recordBtn');
     let mediaRecorder;
     let recordedChunks = [];
@@ -87,7 +115,7 @@
     const compCanvas = document.createElement('canvas');
     const compCtx = compCanvas.getContext('2d');
 
-    // ฟังก์ชันช่วยจัดภาพให้เต็มจอโดยไม่ผิดสัดส่วน (เหมือน object-fit: cover)
+    // ฟังก์ชันยืดภาพกล้องให้เต็มจอ (แบบ Cover)
     function drawCover(ctx, source, srcW, srcH, canvasW, canvasH) {
       if (!srcW || !srcH) return;
       const scale = Math.max(canvasW / srcW, canvasH / srcH);
@@ -107,24 +135,37 @@
         return;
       }
 
-      // 1. ล็อกความกว้างไว้ที่ 720px เพื่อไม่ให้ใหญ่เกินไปจน Android แครช
       const screenRatio = window.innerHeight / window.innerWidth;
       compCanvas.width = 720; 
       compCanvas.height = 720 * screenRatio;
 
-      // 2. สั่งเริ่มวาดภาพลง Canvas ก่อน
       isRecording = true;
       drawCompositeFrame(webcamVideo, aCanvas);
       recordBtn.innerText = "กำลังเตรียม...";
       
-      // 3. หน่วงเวลา 0.5 วิ ให้ Canvas มีภาพแน่ๆ ค่อยเริ่มอัด
       setTimeout(() => {
         const canvasStream = compCanvas.captureStream(30);
+        
+        // --- ดึงเสียงจากวิดีโอ AR มารวมกับภาพ ---
+        let combinedTracks = [...canvasStream.getVideoTracks()];
+        try {
+          const captureMethod = video.captureStream || video.mozCaptureStream;
+          if (captureMethod) {
+            const videoStream = captureMethod.call(video);
+            const audioTracks = videoStream.getAudioTracks();
+            if (audioTracks.length > 0) {
+              combinedTracks.push(audioTracks[0]); // เอาเสียงแทรกเข้าไปด้วย
+            }
+          }
+        } catch (e) {
+          console.warn("ไม่สามารถรวมเสียงได้: ", e);
+        }
 
-        // ให้ใช้ WebM บน Android เพราะเสถียรกว่า MP4 มากๆ เมื่ออัดผ่าน Canvas
+        const combinedStream = new MediaStream(combinedTracks);
+
         let options;
-        if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8')) {
-          options = { mimeType: 'video/webm; codecs=vp8' };
+        if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8, opus')) {
+          options = { mimeType: 'video/webm; codecs=vp8, opus' };
         } else if (MediaRecorder.isTypeSupported('video/webm')) {
           options = { mimeType: 'video/webm' };
         } else if (MediaRecorder.isTypeSupported('video/mp4')) {
@@ -134,9 +175,9 @@
         }
 
         try {
-          mediaRecorder = new MediaRecorder(canvasStream, options);
+          mediaRecorder = new MediaRecorder(combinedStream, options);
         } catch (e) {
-          mediaRecorder = new MediaRecorder(canvasStream);
+          mediaRecorder = new MediaRecorder(combinedStream);
         }
 
         mediaRecorder.ondataavailable = e => {
@@ -172,16 +213,14 @@
 
       compCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
 
-      // 1. วาดกล้องพื้นหลัง 
+      // วาดกล้องพื้นหลังและ AR
       drawCover(compCtx, webcamVideo, webcamVideo.videoWidth, webcamVideo.videoHeight, compCanvas.width, compCanvas.height);
-
-      // 2. วาด AR
       drawCover(compCtx, aCanvas, aCanvas.width, aCanvas.height, compCanvas.width, compCanvas.height);
 
-      // 3. วาดภาพ Overlay (แผ่นเดียว) ให้ครอบเต็มจอพอดี
+      // วาด Overlay (บังคับยืดให้เต็มขนาดวิดีโอแบบเป๊ะๆ เพื่อป้องกันขอบล่าง/ขอบบนหาย)
       const overlayImg = document.getElementById('overlay-img');
       if (overlayImg && overlayImg.complete && overlayImg.naturalHeight !== 0) {
-        drawCover(compCtx, overlayImg, overlayImg.naturalWidth, overlayImg.naturalHeight, compCanvas.width, compCanvas.height);
+        compCtx.drawImage(overlayImg, 0, 0, compCanvas.width, compCanvas.height);
       }
 
       reqAnimFrameId = requestAnimationFrame(() => drawCompositeFrame(webcamVideo, aCanvas));
