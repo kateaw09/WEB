@@ -1,0 +1,271 @@
+<html>
+
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Kateaw AR : For Get Me Not 2025</title>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+
+    * {
+      font-family: 'Prompt', sans-serif;
+    }
+
+    /* จัดการกรอบภาพ Overlay ให้อยู่ด้านบนสุด */
+    #overlay-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      /* ให้กดทะลุกรอบไปโดน AR ได้ */
+      z-index: 10;
+    }
+
+    #overlay-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* จัดการปุ่มกดบันทึกวิดีโอ */
+    #ui-container {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+    }
+
+    #recordBtn {
+      padding: 12px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      border-radius: 50px;
+      background-color: #ff3b30;
+      color: white;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</head>
+
+<body>
+
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights, preserveDrawingBuffer: true" vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false">
+
+    <a-assets>
+      <video id="myVideo" src="./video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline
+        webkit-playsinline></video>
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video id="arVideoEntity" src="#myVideo" width="1" position="0 0 0" rotation="0 0 0"></a-video>
+    </a-entity>
+
+  </a-scene>
+
+  <div id="overlay-container"
+    style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 10;">
+
+    <img id="overlay-top" src="./top.png" crossorigin="anonymous"
+      style="position: absolute; top: 0; left: 0; width: 70%; max-width: 450px;" />
+
+    <img id="overlay-bottom" src="./bottom.png" crossorigin="anonymous"
+      style="position: absolute; bottom: 0; right: 0; width: 70%; max-width: 450px;" />
+
+  </div>
+
+  <div id="ui-container">
+    <button id="recordBtn">เริ่มบันทึก</button>
+  </div>
+
+  <script>
+    const video = document.querySelector('#myVideo');
+    const targetEntity = document.querySelector('[mindar-image-target]');
+    const arVideoEntity = document.querySelector('#arVideoEntity');
+
+    // ==========================================
+    // 1. ปรับอัตราส่วนวิดีโอให้เป๊ะแบบอัตโนมัติ
+    // ==========================================
+    video.addEventListener('loadedmetadata', () => {
+      const ratio = video.videoHeight / video.videoWidth;
+      arVideoEntity.setAttribute('height', 1 * ratio);
+    });
+
+    targetEntity.addEventListener("targetFound", event => {
+      video.play();
+    });
+
+    targetEntity.addEventListener("targetLost", event => {
+      video.pause();
+    });
+
+    // ==========================================
+    // 2. ระบบบันทึกวิดีโอ (กล้อง + AR + Overlay)
+    // ==========================================
+    const recordBtn = document.getElementById('recordBtn');
+    const overlayImg = document.getElementById('overlay-img');
+    let mediaRecorder;
+    let recordedChunks = [];
+    let isRecording = false;
+    let reqAnimFrameId;
+
+    // สร้าง Canvas ล่องหนเพื่อเอาภาพทุกเลเยอร์มาวาดรวมกัน
+    const compCanvas = document.createElement('canvas');
+    const compCtx = compCanvas.getContext('2d');
+
+    function startRecording() {
+      const aCanvas = document.querySelector('.a-canvas');
+      const webcamVideo = document.querySelector('video:not(#myVideo)');
+
+      if (!aCanvas || !webcamVideo) {
+        alert("รอให้ระบบกล้องทำงานให้เสร็จก่อนนะครับ");
+        return;
+      }
+
+      compCanvas.width = aCanvas.width;
+      compCanvas.height = aCanvas.height;
+
+      const canvasStream = compCanvas.captureStream(30);
+
+      let audioTracks = [];
+      try {
+        const captureMethod = video.captureStream || video.mozCaptureStream;
+        if (captureMethod) {
+          const videoStream = captureMethod.call(video);
+          audioTracks = videoStream.getAudioTracks();
+        }
+      } catch (e) {
+        console.warn("ไม่สามารถดึงเสียงจากวิดีโอได้: ", e);
+      }
+
+      const combinedStream = new MediaStream([
+        ...canvasStream.getVideoTracks(),
+        ...audioTracks
+      ]);
+
+      // เช็คการรองรับไฟล์วิดีโอ
+      let options;
+      let fileExtension = 'webm'; // ค่าเริ่มต้น
+
+      if (MediaRecorder.isTypeSupported('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')) {
+        options = { mimeType: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"' };
+        fileExtension = 'mp4';
+      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+        options = { mimeType: 'video/mp4' };
+        fileExtension = 'mp4';
+      } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9, opus')) {
+        options = { mimeType: 'video/webm; codecs=vp9, opus' };
+        fileExtension = 'webm';
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+        options = { mimeType: 'video/webm' };
+        fileExtension = 'webm';
+      } else {
+        options = {}; // ถ้าไม่รู้จักเลย ปล่อยให้เบราว์เซอร์เลือกให้
+      }
+
+      try {
+        mediaRecorder = new MediaRecorder(combinedStream, options);
+      } catch (e) {
+        console.warn("ไม่สามารถใช้ options ที่กำหนดได้, กลับไปใช้ค่าเริ่มต้น", e);
+        mediaRecorder = new MediaRecorder(combinedStream);
+      }
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `FroGetMeNot2025-Kateaw.${fileExtension}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        recordedChunks = [];
+      };
+
+      mediaRecorder.start();
+      isRecording = true;
+      recordBtn.innerText = "หยุดบันทึก";
+      recordBtn.style.backgroundColor = "#8e8e93";
+
+      // เริ่มวาดภาพทุกอย่างรวมกัน
+      drawCompositeFrame(webcamVideo, aCanvas);
+    }
+
+    function stopRecording() {
+      isRecording = false;
+      mediaRecorder.stop();
+      cancelAnimationFrame(reqAnimFrameId);
+      recordBtn.innerText = "เริ่มบันทึก";
+      recordBtn.style.backgroundColor = "#ff3b30";
+    }
+
+    function drawCompositeFrame(webcamVideo, aCanvas) {
+      if (!isRecording) return;
+
+      compCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
+
+      // เลเยอร์ 1 (ล่างสุด): ภาพจากกล้อง
+      const scale = Math.max(compCanvas.width / webcamVideo.videoWidth, compCanvas.height / webcamVideo.videoHeight);
+      const w = webcamVideo.videoWidth * scale;
+      const h = webcamVideo.videoHeight * scale;
+      const x = (compCanvas.width - w) / 2;
+      const y = (compCanvas.height - h) / 2;
+      compCtx.drawImage(webcamVideo, x, y, w, h);
+
+      // เลเยอร์ 2: ภาพ AR 3D และวิดีโอ
+      compCtx.drawImage(aCanvas, 0, 0, compCanvas.width, compCanvas.height);
+
+      // เลเยอร์ 3: ภาพ Overlay ซ้ายบน และ ขวาล่าง
+      const topImg = document.getElementById('overlay-top');
+      const bottomImg = document.getElementById('overlay-bottom');
+
+      // ฟังก์ชันช่วยวาดรูปให้ตรงตำแหน่งหน้าจอเป๊ะๆ
+      const drawOverlayExact = (imgElement) => {
+        if (imgElement.complete && imgElement.naturalHeight !== 0) {
+          // คำนวณอัตราส่วนระหว่าง Canvas ของวิดีโอ กับ หน้าจอมือถือจริงๆ
+          const scaleX = compCanvas.width / window.innerWidth;
+          const scaleY = compCanvas.height / window.innerHeight;
+
+          // หาตำแหน่งและขนาดของรูปบนหน้าจอ
+          const rect = imgElement.getBoundingClientRect();
+
+          // วาดลงไปในวิดีโอ
+          compCtx.drawImage(
+            imgElement,
+            rect.left * scaleX,
+            rect.top * scaleY,
+            rect.width * scaleX,
+            rect.height * scaleY
+          );
+        }
+      };
+
+      // สั่งวาดทั้ง 2 ชิ้น
+      drawOverlayExact(topImg);
+      drawOverlayExact(bottomImg);
+
+      // ทำซ้ำลูป
+      reqAnimFrameId = requestAnimationFrame(() => drawCompositeFrame(webcamVideo, aCanvas));
+    }
+
+    // สลับการทำงานเมื่อกดปุ่ม
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) stopRecording();
+      else startRecording();
+    });
+  </script>
+</body>
+
+</html>
