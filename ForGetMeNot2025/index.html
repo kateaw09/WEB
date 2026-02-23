@@ -8,17 +8,16 @@
     @import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
     body, html {
-      margin: 0; padding: 0; overflow: hidden;
+      margin: 0; padding: 0; overflow: hidden; width: 100vw; height: 100vh;
     }
 
     * {
       font-family: 'Prompt', sans-serif;
     }
 
-    /* แก้ให้ใช้ 100% แทน 100vh เพื่อลดปัญหาขอบจอบนมือถือ */
     #overlay-container {
       position: absolute;
-      top: 0; left: 0; width: 100vw; height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 10;
     }
 
@@ -92,11 +91,25 @@
     let mediaRecorder;
     let recordedChunks = [];
     let isRecording = false;
-    let isProcessingBtn = false; // ตัวแปรสำหรับ Debounce
+    let isProcessingBtn = false; 
     let reqAnimFrameId;
 
     const compCanvas = document.createElement('canvas');
     const compCtx = compCanvas.getContext('2d');
+    
+    // ตั้งค่าความคมชัดของวิดีโอ (1.5 เท่าของหน้าจอ เพื่อไม่ให้หนักเครื่องเกินไป)
+    const canvasScale = 1.5; 
+
+    // ฟังก์ชันช่วยจัดภาพให้เต็มจอโดยไม่ผิดสัดส่วน (เหมือน object-fit: cover)
+    function drawCover(ctx, source, srcW, srcH, canvasW, canvasH) {
+      if (!srcW || !srcH) return;
+      const scale = Math.max(canvasW / srcW, canvasH / srcH);
+      const w = srcW * scale;
+      const h = srcH * scale;
+      const x = (canvasW - w) / 2;
+      const y = (canvasH - h) / 2;
+      ctx.drawImage(source, x, y, w, h);
+    }
 
     function startRecording() {
       const aCanvas = document.querySelector('.a-canvas');
@@ -107,69 +120,48 @@
         return;
       }
 
-      compCanvas.width = aCanvas.width;
-      compCanvas.height = aCanvas.height;
+      // 1. บังคับให้ Canvas มีขนาดเท่า "หน้าจอมือถือ" เป๊ะๆ 
+      compCanvas.width = window.innerWidth * canvasScale;
+      compCanvas.height = window.innerHeight * canvasScale;
 
-      const canvasStream = compCanvas.captureStream(30);
-
-      let audioTracks = [];
-      try {
-        const captureMethod = video.captureStream || video.mozCaptureStream;
-        if (captureMethod) {
-          const videoStream = captureMethod.call(video);
-          audioTracks = videoStream.getAudioTracks();
-        }
-      } catch (e) {
-        console.warn("ไม่สามารถดึงเสียงจากวิดีโอได้: ", e);
-      }
-
-      const combinedStream = new MediaStream([
-        ...canvasStream.getVideoTracks(),
-        ...audioTracks
-      ]);
-
-      let options;
-      let fileExtension = 'webm';
-
-      if (MediaRecorder.isTypeSupported('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')) {
-        options = { mimeType: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"' };
-        fileExtension = 'mp4';
-      } else if (MediaRecorder.isTypeSupported('video/mp4')) {
-        options = { mimeType: 'video/mp4' };
-        fileExtension = 'mp4';
-      } else if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9, opus')) {
-        options = { mimeType: 'video/webm; codecs=vp9, opus' };
-        fileExtension = 'webm';
-      } else if (MediaRecorder.isTypeSupported('video/webm')) {
-        options = { mimeType: 'video/webm' };
-        fileExtension = 'webm';
-      } else {
-        options = {};
-      }
-
-      try {
-        mediaRecorder = new MediaRecorder(combinedStream, options);
-      } catch (e) {
-        mediaRecorder = new MediaRecorder(combinedStream);
-      }
-
-      mediaRecorder.ondataavailable = e => {
-        if (e.data.size > 0) recordedChunks.push(e.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
-        const url = URL.createObjectURL(blob);
-        showRecordedVideoUI(url, fileExtension);
-        recordedChunks = [];
-      };
-
-      mediaRecorder.start();
+      // 2. สั่งเริ่มวาดภาพลง Canvas ทันที "ก่อน" ที่จะสั่งบันทึก (แก้บั๊ก iOS ภาพดำ/สตรีมพัง)
       isRecording = true;
-      recordBtn.innerText = "⏹️ หยุดบันทึก";
-      recordBtn.style.backgroundColor = "#8e8e93";
-
       drawCompositeFrame(webcamVideo, aCanvas);
+
+      recordBtn.innerText = "กำลังเตรียม...";
+      
+      // 3. หน่วงเวลา 0.1 วิ เพื่อให้มั่นใจว่าวาดภาพลง Canvas ไปแล้ว ถึงเริ่มอัดได้
+      setTimeout(() => {
+        // ใช้แค่สตรีมภาพ (ตัดเสียงออกชั่วคราวเพื่อแก้ปัญหา MediaRecorder เด้งหลุด)
+        const canvasStream = compCanvas.captureStream(30);
+
+        let options = { mimeType: 'video/mp4' };
+        if (!MediaRecorder.isTypeSupported('video/mp4')) {
+          options = { mimeType: 'video/webm' };
+        }
+
+        try {
+          mediaRecorder = new MediaRecorder(canvasStream, options);
+        } catch (e) {
+          mediaRecorder = new MediaRecorder(canvasStream);
+        }
+
+        mediaRecorder.ondataavailable = e => {
+          if (e.data.size > 0) recordedChunks.push(e.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
+          const url = URL.createObjectURL(blob);
+          const ext = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm';
+          showRecordedVideoUI(url, ext);
+          recordedChunks = [];
+        };
+
+        mediaRecorder.start();
+        recordBtn.innerText = "⏹️ หยุดบันทึก";
+        recordBtn.style.backgroundColor = "#8e8e93";
+      }, 100); 
     }
 
     function stopRecording() {
@@ -187,50 +179,36 @@
 
       compCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
 
-      // 1. วาดกล้อง
-      const scaleWebcam = Math.max(compCanvas.width / webcamVideo.videoWidth, compCanvas.height / webcamVideo.videoHeight);
-      const wWebcam = webcamVideo.videoWidth * scaleWebcam;
-      const hWebcam = webcamVideo.videoHeight * scaleWebcam;
-      const xWebcam = (compCanvas.width - wWebcam) / 2;
-      const yWebcam = (compCanvas.height - hWebcam) / 2;
-      compCtx.drawImage(webcamVideo, xWebcam, yWebcam, wWebcam, hWebcam);
+      // 1. วาดกล้องพื้นหลัง (ยืดให้เต็มจอ)
+      drawCover(compCtx, webcamVideo, webcamVideo.videoWidth, webcamVideo.videoHeight, compCanvas.width, compCanvas.height);
 
-      // 2. วาด AR
-      compCtx.drawImage(aCanvas, 0, 0, compCanvas.width, compCanvas.height);
+      // 2. วาด AR (ยืดให้เต็มจอ)
+      drawCover(compCtx, aCanvas, aCanvas.width, aCanvas.height, compCanvas.width, compCanvas.height);
 
-      // 3. วาด Overlay แบบยึดติดมุม Canvas (แก้ปัญหาภาพตกขอบ)
+      // 3. วาด Overlay ตามตำแหน่งบนหน้าจอเป๊ะๆ (รับรองไม่ตกขอบ)
       const topImg = document.getElementById('overlay-top');
       const bottomImg = document.getElementById('overlay-bottom');
 
-      const drawOverlayPinned = (imgElement, position) => {
+      const drawOverlayExact = (imgElement) => {
         if (imgElement && imgElement.complete && imgElement.naturalHeight !== 0) {
-          // สัดส่วนขนาดหน้าจอ เทียบกับ Canvas
-          const scale = compCanvas.width / window.innerWidth;
+          // getBoundingClientRect ดึงตำแหน่ง x,y บนหน้าจอมือถือมาตรงๆ
           const rect = imgElement.getBoundingClientRect();
-          
-          // คำนวณขนาดภาพที่จะวาดลง Canvas ให้พอดีกับที่ตาเห็น
-          const drawWidth = rect.width * scale;
-          const drawHeight = rect.height * scale;
-
-          if (position === 'top-left') {
-            // ยึดติดมุมซ้ายบน
-            compCtx.drawImage(imgElement, 0, 0, drawWidth, drawHeight);
-          } else if (position === 'bottom-right') {
-            // ยึดติดมุมขวาล่าง โดยเอาความกว้าง/สูงของ Canvas ตั้ง แล้วลบด้วยขนาดรูป
-            const x = compCanvas.width - drawWidth;
-            const y = compCanvas.height - drawHeight;
-            compCtx.drawImage(imgElement, x, y, drawWidth, drawHeight);
-          }
+          compCtx.drawImage(
+            imgElement,
+            rect.left * canvasScale,
+            rect.top * canvasScale,
+            rect.width * canvasScale,
+            rect.height * canvasScale
+          );
         }
       };
 
-      drawOverlayPinned(topImg, 'top-left');
-      drawOverlayPinned(bottomImg, 'bottom-right');
+      drawOverlayExact(topImg);
+      drawOverlayExact(bottomImg);
 
       reqAnimFrameId = requestAnimationFrame(() => drawCompositeFrame(webcamVideo, aCanvas));
     }
 
-    // Popup UI
     function showRecordedVideoUI(videoUrl, fileExtension) {
       const popup = document.createElement('div');
       popup.style.position = 'fixed';
@@ -244,7 +222,7 @@
       popup.style.alignItems = 'center';
 
       popup.innerHTML = `
-        <h3 style="color: white; margin-bottom: 10px; font-family: 'Prompt', sans-serif;">ดูตัวอย่างและบันทึก</h3>
+        <h3 style="color: white; margin-bottom: 10px; font-family: 'Prompt', sans-serif;">ตัวอย่างวิดีโอ</h3>
         <video src="${videoUrl}" controls autoplay loop style="max-width: 90%; max-height: 60vh; border: 2px solid white; border-radius: 10px;"></video>
         <div style="margin-top: 20px; display: flex; gap: 10px;">
           <a href="${videoUrl}" download="FroGetMeNot2025-Kateaw.${fileExtension}" style="background: #007aff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 50px; font-weight: bold; font-family: 'Prompt', sans-serif;">💾 บันทึก</a>
@@ -263,13 +241,11 @@
       });
     }
 
-    // Event ปุ่มกด (พร้อมระบบ Debounce กันกดเบิ้ล)
     recordBtn.addEventListener('click', () => {
-      // ถ้าระบบกำลังประมวลผลการกดปุ่มอยู่ ให้เมินการกดครั้งนี้ไปเลย
       if (isProcessingBtn) return;
 
       isProcessingBtn = true;
-      recordBtn.style.opacity = "0.6"; // ทำให้ปุ่มจางลง เพื่อบอกว่ารับคำสั่งแล้ว
+      recordBtn.style.opacity = "0.6"; 
 
       if (isRecording) {
         stopRecording();
@@ -277,7 +253,6 @@
         startRecording();
       }
 
-      // หน่วงเวลา 1 วินาที ถึงจะอนุญาตให้กดปุ่มได้อีกครั้ง
       setTimeout(() => {
         isProcessingBtn = false;
         recordBtn.style.opacity = "1";
