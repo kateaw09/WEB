@@ -8,17 +8,20 @@
     @import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
     body, html {
-      margin: 0; padding: 0; overflow: hidden; width: 100vw; height: 100vh;
+      margin: 0; padding: 0; overflow: hidden; width: 100vw; height: 100vh; background: black;
     }
 
-    * {
-      font-family: 'Prompt', sans-serif;
-    }
+    * { font-family: 'Prompt', sans-serif; }
 
     #overlay-container {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none; z-index: 10;
+    }
+
+    /* ใช้รูปแผ่นเดียวให้เต็มจอไปเลย */
+    #overlay-img {
+      width: 100%; height: 100%; object-fit: cover;
     }
 
     #ui-container {
@@ -43,26 +46,18 @@
   <a-scene mindar-image="imageTargetSrc: ./targets.mind;" color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights, preserveDrawingBuffer: true" vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false">
-
     <a-assets>
       <video id="myVideo" src="./video.mp4" preload="auto" loop="true" crossorigin="anonymous" playsinline
         webkit-playsinline></video>
     </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
     <a-entity mindar-image-target="targetIndex: 0">
       <a-video id="arVideoEntity" src="#myVideo" width="1" position="0 0 0" rotation="0 0 0"></a-video>
     </a-entity>
-
   </a-scene>
 
   <div id="overlay-container">
-    <img id="overlay-top" src="./top.png" crossorigin="anonymous"
-      style="position: absolute; top: 0; left: 0; width: 70%; max-width: 450px;" />
-
-    <img id="overlay-bottom" src="./bottom.png" crossorigin="anonymous"
-      style="position: absolute; bottom: 0; right: 0; width: 70%; max-width: 450px;" />
+    <img id="overlay-img" src="./Congrast.png" crossorigin="anonymous" />
   </div>
 
   <div id="ui-container">
@@ -79,13 +74,8 @@
       arVideoEntity.setAttribute('height', 1 * ratio);
     });
 
-    targetEntity.addEventListener("targetFound", event => {
-      video.play();
-    });
-
-    targetEntity.addEventListener("targetLost", event => {
-      video.pause();
-    });
+    targetEntity.addEventListener("targetFound", event => { video.play(); });
+    targetEntity.addEventListener("targetLost", event => { video.pause(); });
 
     const recordBtn = document.getElementById('recordBtn');
     let mediaRecorder;
@@ -96,9 +86,6 @@
 
     const compCanvas = document.createElement('canvas');
     const compCtx = compCanvas.getContext('2d');
-    
-    // ตั้งค่าความคมชัดของวิดีโอ (1.5 เท่าของหน้าจอ เพื่อไม่ให้หนักเครื่องเกินไป)
-    const canvasScale = 1.5; 
 
     // ฟังก์ชันช่วยจัดภาพให้เต็มจอโดยไม่ผิดสัดส่วน (เหมือน object-fit: cover)
     function drawCover(ctx, source, srcW, srcH, canvasW, canvasH) {
@@ -120,24 +107,30 @@
         return;
       }
 
-      // 1. บังคับให้ Canvas มีขนาดเท่า "หน้าจอมือถือ" เป๊ะๆ 
-      compCanvas.width = window.innerWidth * canvasScale;
-      compCanvas.height = window.innerHeight * canvasScale;
+      // 1. ล็อกความกว้างไว้ที่ 720px เพื่อไม่ให้ใหญ่เกินไปจน Android แครช
+      const screenRatio = window.innerHeight / window.innerWidth;
+      compCanvas.width = 720; 
+      compCanvas.height = 720 * screenRatio;
 
-      // 2. สั่งเริ่มวาดภาพลง Canvas ทันที "ก่อน" ที่จะสั่งบันทึก (แก้บั๊ก iOS ภาพดำ/สตรีมพัง)
+      // 2. สั่งเริ่มวาดภาพลง Canvas ก่อน
       isRecording = true;
       drawCompositeFrame(webcamVideo, aCanvas);
-
       recordBtn.innerText = "กำลังเตรียม...";
       
-      // 3. หน่วงเวลา 0.1 วิ เพื่อให้มั่นใจว่าวาดภาพลง Canvas ไปแล้ว ถึงเริ่มอัดได้
+      // 3. หน่วงเวลา 0.5 วิ ให้ Canvas มีภาพแน่ๆ ค่อยเริ่มอัด
       setTimeout(() => {
-        // ใช้แค่สตรีมภาพ (ตัดเสียงออกชั่วคราวเพื่อแก้ปัญหา MediaRecorder เด้งหลุด)
         const canvasStream = compCanvas.captureStream(30);
 
-        let options = { mimeType: 'video/mp4' };
-        if (!MediaRecorder.isTypeSupported('video/mp4')) {
+        // ให้ใช้ WebM บน Android เพราะเสถียรกว่า MP4 มากๆ เมื่ออัดผ่าน Canvas
+        let options;
+        if (MediaRecorder.isTypeSupported('video/webm; codecs=vp8')) {
+          options = { mimeType: 'video/webm; codecs=vp8' };
+        } else if (MediaRecorder.isTypeSupported('video/webm')) {
           options = { mimeType: 'video/webm' };
+        } else if (MediaRecorder.isTypeSupported('video/mp4')) {
+          options = { mimeType: 'video/mp4' };
+        } else {
+          options = {};
         }
 
         try {
@@ -151,9 +144,9 @@
         };
 
         mediaRecorder.onstop = () => {
-          const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
+          const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/webm' });
           const url = URL.createObjectURL(blob);
-          const ext = mediaRecorder.mimeType.includes('mp4') ? 'mp4' : 'webm';
+          const ext = (mediaRecorder.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
           showRecordedVideoUI(url, ext);
           recordedChunks = [];
         };
@@ -161,7 +154,7 @@
         mediaRecorder.start();
         recordBtn.innerText = "⏹️ หยุดบันทึก";
         recordBtn.style.backgroundColor = "#8e8e93";
-      }, 100); 
+      }, 500); 
     }
 
     function stopRecording() {
@@ -179,32 +172,17 @@
 
       compCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
 
-      // 1. วาดกล้องพื้นหลัง (ยืดให้เต็มจอ)
+      // 1. วาดกล้องพื้นหลัง 
       drawCover(compCtx, webcamVideo, webcamVideo.videoWidth, webcamVideo.videoHeight, compCanvas.width, compCanvas.height);
 
-      // 2. วาด AR (ยืดให้เต็มจอ)
+      // 2. วาด AR
       drawCover(compCtx, aCanvas, aCanvas.width, aCanvas.height, compCanvas.width, compCanvas.height);
 
-      // 3. วาด Overlay ตามตำแหน่งบนหน้าจอเป๊ะๆ (รับรองไม่ตกขอบ)
-      const topImg = document.getElementById('overlay-top');
-      const bottomImg = document.getElementById('overlay-bottom');
-
-      const drawOverlayExact = (imgElement) => {
-        if (imgElement && imgElement.complete && imgElement.naturalHeight !== 0) {
-          // getBoundingClientRect ดึงตำแหน่ง x,y บนหน้าจอมือถือมาตรงๆ
-          const rect = imgElement.getBoundingClientRect();
-          compCtx.drawImage(
-            imgElement,
-            rect.left * canvasScale,
-            rect.top * canvasScale,
-            rect.width * canvasScale,
-            rect.height * canvasScale
-          );
-        }
-      };
-
-      drawOverlayExact(topImg);
-      drawOverlayExact(bottomImg);
+      // 3. วาดภาพ Overlay (แผ่นเดียว) ให้ครอบเต็มจอพอดี
+      const overlayImg = document.getElementById('overlay-img');
+      if (overlayImg && overlayImg.complete && overlayImg.naturalHeight !== 0) {
+        drawCover(compCtx, overlayImg, overlayImg.naturalWidth, overlayImg.naturalHeight, compCanvas.width, compCanvas.height);
+      }
 
       reqAnimFrameId = requestAnimationFrame(() => drawCompositeFrame(webcamVideo, aCanvas));
     }
@@ -222,14 +200,14 @@
       popup.style.alignItems = 'center';
 
       popup.innerHTML = `
-        <h3 style="color: white; margin-bottom: 10px; font-family: 'Prompt', sans-serif;">ตัวอย่างวิดีโอ</h3>
+        <h3 style="color: white; margin-bottom: 10px; font-family: 'Prompt', sans-serif;">ดูวิดีโอตัวอย่าง</h3>
         <video src="${videoUrl}" controls autoplay loop style="max-width: 90%; max-height: 60vh; border: 2px solid white; border-radius: 10px;"></video>
         <div style="margin-top: 20px; display: flex; gap: 10px;">
-          <a href="${videoUrl}" download="FroGetMeNot2025-Kateaw.${fileExtension}" style="background: #007aff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 50px; font-weight: bold; font-family: 'Prompt', sans-serif;">💾 บันทึก</a>
+          <a href="${videoUrl}" download="Congrast-AR.${fileExtension}" style="background: #007aff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 50px; font-weight: bold; font-family: 'Prompt', sans-serif;">💾 บันทึก</a>
           <button id="closePopupBtn" style="background: #ff3b30; color: white; padding: 12px 24px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; font-family: 'Prompt', sans-serif;">❌ ปิด</button>
         </div>
         <p style="color: #aaa; font-size: 12px; margin-top: 15px; font-family: 'Prompt', sans-serif; text-align: center; padding: 0 20px;">
-          *บน iPhone ให้แตะค้างที่วิดีโอแล้วเลือก<br>"บันทึกวิดีโอ" หรือ "Save Video"*
+          *ถ้าปุ่มบันทึกไม่ทำงาน ให้แตะค้างที่วิดีโอแล้วเลือก "บันทึกวิดีโอ"*
         </p>
       `;
 
@@ -243,7 +221,6 @@
 
     recordBtn.addEventListener('click', () => {
       if (isProcessingBtn) return;
-
       isProcessingBtn = true;
       recordBtn.style.opacity = "0.6"; 
 
