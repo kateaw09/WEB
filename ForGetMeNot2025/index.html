@@ -1,51 +1,40 @@
 <html>
-
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Kateaw AR : For Get Me Not 2025</title>
   <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
 
+    body, html {
+      margin: 0; padding: 0; overflow: hidden;
+    }
+
     * {
       font-family: 'Prompt', sans-serif;
     }
 
+    /* แก้ให้ใช้ 100% แทน 100vh เพื่อลดปัญหาขอบจอบนมือถือ */
     #overlay-container {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      pointer-events: none;
-      z-index: 10;
-    }
-
-    #overlay-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      top: 0; left: 0; width: 100vw; height: 100%;
+      pointer-events: none; z-index: 10;
     }
 
     #ui-container {
       position: absolute;
-      bottom: 30px;
-      left: 50%;
+      bottom: 30px; left: 50%;
       transform: translateX(-50%);
       z-index: 20;
     }
 
     #recordBtn {
-      padding: 12px 24px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 50px;
-      background-color: #ff3b30;
-      color: white;
-      border: none;
-      cursor: pointer;
+      padding: 12px 24px; font-size: 16px; font-weight: bold;
+      border-radius: 50px; background-color: #ff3b30;
+      color: white; border: none; cursor: pointer;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+      transition: opacity 0.3s;
     }
   </style>
 </head>
@@ -78,7 +67,7 @@
   </div>
 
   <div id="ui-container">
-    <button id="recordBtn">เริ่มบันทึก</button>
+    <button id="recordBtn">🔴 เริ่มบันทึก</button>
   </div>
 
   <script>
@@ -103,6 +92,7 @@
     let mediaRecorder;
     let recordedChunks = [];
     let isRecording = false;
+    let isProcessingBtn = false; // ตัวแปรสำหรับ Debounce
     let reqAnimFrameId;
 
     const compCanvas = document.createElement('canvas');
@@ -160,7 +150,6 @@
       try {
         mediaRecorder = new MediaRecorder(combinedStream, options);
       } catch (e) {
-        console.warn("ไม่สามารถใช้ options ที่กำหนดได้, กลับไปใช้ค่าเริ่มต้น", e);
         mediaRecorder = new MediaRecorder(combinedStream);
       }
 
@@ -171,16 +160,13 @@
       mediaRecorder.onstop = () => {
         const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
         const url = URL.createObjectURL(blob);
-
-        // เรียกใช้ฟังก์ชันแสดง Popup แทนการดาวน์โหลดอัตโนมัติ
         showRecordedVideoUI(url, fileExtension);
-
         recordedChunks = [];
       };
 
       mediaRecorder.start();
       isRecording = true;
-      recordBtn.innerText = "หยุดบันทึก";
+      recordBtn.innerText = "⏹️ หยุดบันทึก";
       recordBtn.style.backgroundColor = "#8e8e93";
 
       drawCompositeFrame(webcamVideo, aCanvas);
@@ -188,9 +174,11 @@
 
     function stopRecording() {
       isRecording = false;
-      mediaRecorder.stop();
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+      }
       cancelAnimationFrame(reqAnimFrameId);
-      recordBtn.innerText = "เริ่มบันทึก";
+      recordBtn.innerText = "🔴 เริ่มบันทึก";
       recordBtn.style.backgroundColor = "#ff3b30";
     }
 
@@ -199,37 +187,50 @@
 
       compCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
 
-      const scale = Math.max(compCanvas.width / webcamVideo.videoWidth, compCanvas.height / webcamVideo.videoHeight);
-      const w = webcamVideo.videoWidth * scale;
-      const h = webcamVideo.videoHeight * scale;
-      const x = (compCanvas.width - w) / 2;
-      const y = (compCanvas.height - h) / 2;
-      compCtx.drawImage(webcamVideo, x, y, w, h);
+      // 1. วาดกล้อง
+      const scaleWebcam = Math.max(compCanvas.width / webcamVideo.videoWidth, compCanvas.height / webcamVideo.videoHeight);
+      const wWebcam = webcamVideo.videoWidth * scaleWebcam;
+      const hWebcam = webcamVideo.videoHeight * scaleWebcam;
+      const xWebcam = (compCanvas.width - wWebcam) / 2;
+      const yWebcam = (compCanvas.height - hWebcam) / 2;
+      compCtx.drawImage(webcamVideo, xWebcam, yWebcam, wWebcam, hWebcam);
 
+      // 2. วาด AR
       compCtx.drawImage(aCanvas, 0, 0, compCanvas.width, compCanvas.height);
 
+      // 3. วาด Overlay แบบยึดติดมุม Canvas (แก้ปัญหาภาพตกขอบ)
       const topImg = document.getElementById('overlay-top');
       const bottomImg = document.getElementById('overlay-bottom');
 
-      const drawOverlayExact = (imgElement) => {
-        if (imgElement.complete && imgElement.naturalHeight !== 0) {
-          const scaleX = compCanvas.width / window.innerWidth;
-          const scaleY = compCanvas.height / window.innerHeight;
+      const drawOverlayPinned = (imgElement, position) => {
+        if (imgElement && imgElement.complete && imgElement.naturalHeight !== 0) {
+          // สัดส่วนขนาดหน้าจอ เทียบกับ Canvas
+          const scale = compCanvas.width / window.innerWidth;
           const rect = imgElement.getBoundingClientRect();
-          compCtx.drawImage(
-            imgElement,
-            rect.left * scaleX, rect.top * scaleY, rect.width * scaleX, rect.height * scaleY
-          );
+          
+          // คำนวณขนาดภาพที่จะวาดลง Canvas ให้พอดีกับที่ตาเห็น
+          const drawWidth = rect.width * scale;
+          const drawHeight = rect.height * scale;
+
+          if (position === 'top-left') {
+            // ยึดติดมุมซ้ายบน
+            compCtx.drawImage(imgElement, 0, 0, drawWidth, drawHeight);
+          } else if (position === 'bottom-right') {
+            // ยึดติดมุมขวาล่าง โดยเอาความกว้าง/สูงของ Canvas ตั้ง แล้วลบด้วยขนาดรูป
+            const x = compCanvas.width - drawWidth;
+            const y = compCanvas.height - drawHeight;
+            compCtx.drawImage(imgElement, x, y, drawWidth, drawHeight);
+          }
         }
       };
 
-      drawOverlayExact(topImg);
-      drawOverlayExact(bottomImg);
+      drawOverlayPinned(topImg, 'top-left');
+      drawOverlayPinned(bottomImg, 'bottom-right');
 
       reqAnimFrameId = requestAnimationFrame(() => drawCompositeFrame(webcamVideo, aCanvas));
     }
 
-    // ฟังก์ชันสำหรับสร้าง Popup บนมือถือ
+    // Popup UI
     function showRecordedVideoUI(videoUrl, fileExtension) {
       const popup = document.createElement('div');
       popup.style.position = 'fixed';
@@ -246,11 +247,11 @@
         <h3 style="color: white; margin-bottom: 10px; font-family: 'Prompt', sans-serif;">ดูตัวอย่างและบันทึก</h3>
         <video src="${videoUrl}" controls autoplay loop style="max-width: 90%; max-height: 60vh; border: 2px solid white; border-radius: 10px;"></video>
         <div style="margin-top: 20px; display: flex; gap: 10px;">
-          <a href="${videoUrl}" download="FroGetMeNot2025-Kateaw.${fileExtension}" style="background: #007aff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 50px; font-weight: bold; font-family: 'Prompt', sans-serif;">💾 บันทึกลงเครื่อง</a>
+          <a href="${videoUrl}" download="FroGetMeNot2025-Kateaw.${fileExtension}" style="background: #007aff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 50px; font-weight: bold; font-family: 'Prompt', sans-serif;">💾 บันทึก</a>
           <button id="closePopupBtn" style="background: #ff3b30; color: white; padding: 12px 24px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; font-family: 'Prompt', sans-serif;">❌ ปิด</button>
         </div>
         <p style="color: #aaa; font-size: 12px; margin-top: 15px; font-family: 'Prompt', sans-serif; text-align: center; padding: 0 20px;">
-          *บน iOS (iPhone/iPad) ให้แตะค้างที่วิดีโอแล้วเลือก "Save Video" <br> หรือ "บันทึกวิดีโอ" แทนการกดปุ่ม*
+          *บน iPhone ให้แตะค้างที่วิดีโอแล้วเลือก<br>"บันทึกวิดีโอ" หรือ "Save Video"*
         </p>
       `;
 
@@ -258,15 +259,31 @@
 
       document.getElementById('closePopupBtn').addEventListener('click', () => {
         document.body.removeChild(popup);
-        URL.revokeObjectURL(videoUrl); // คืนพื้นที่หน่วยความจำ
+        URL.revokeObjectURL(videoUrl);
       });
     }
 
+    // Event ปุ่มกด (พร้อมระบบ Debounce กันกดเบิ้ล)
     recordBtn.addEventListener('click', () => {
-      if (isRecording) stopRecording();
-      else startRecording();
+      // ถ้าระบบกำลังประมวลผลการกดปุ่มอยู่ ให้เมินการกดครั้งนี้ไปเลย
+      if (isProcessingBtn) return;
+
+      isProcessingBtn = true;
+      recordBtn.style.opacity = "0.6"; // ทำให้ปุ่มจางลง เพื่อบอกว่ารับคำสั่งแล้ว
+
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+
+      // หน่วงเวลา 1 วินาที ถึงจะอนุญาตให้กดปุ่มได้อีกครั้ง
+      setTimeout(() => {
+        isProcessingBtn = false;
+        recordBtn.style.opacity = "1";
+      }, 1000);
     });
+
   </script>
 </body>
-
 </html>
