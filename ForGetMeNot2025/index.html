@@ -12,7 +12,6 @@
       font-family: 'Prompt', sans-serif;
     }
 
-    /* จัดการกรอบภาพ Overlay ให้อยู่ด้านบนสุด */
     #overlay-container {
       position: absolute;
       top: 0;
@@ -20,7 +19,6 @@
       width: 100vw;
       height: 100vh;
       pointer-events: none;
-      /* ให้กดทะลุกรอบไปโดน AR ได้ */
       z-index: 10;
     }
 
@@ -30,7 +28,6 @@
       object-fit: cover;
     }
 
-    /* จัดการปุ่มกดบันทึกวิดีโอ */
     #ui-container {
       position: absolute;
       bottom: 30px;
@@ -72,15 +69,12 @@
 
   </a-scene>
 
-  <div id="overlay-container"
-    style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 10;">
-
+  <div id="overlay-container">
     <img id="overlay-top" src="./top.png" crossorigin="anonymous"
       style="position: absolute; top: 0; left: 0; width: 70%; max-width: 450px;" />
 
     <img id="overlay-bottom" src="./bottom.png" crossorigin="anonymous"
       style="position: absolute; bottom: 0; right: 0; width: 70%; max-width: 450px;" />
-
   </div>
 
   <div id="ui-container">
@@ -92,9 +86,6 @@
     const targetEntity = document.querySelector('[mindar-image-target]');
     const arVideoEntity = document.querySelector('#arVideoEntity');
 
-    // ==========================================
-    // 1. ปรับอัตราส่วนวิดีโอให้เป๊ะแบบอัตโนมัติ
-    // ==========================================
     video.addEventListener('loadedmetadata', () => {
       const ratio = video.videoHeight / video.videoWidth;
       arVideoEntity.setAttribute('height', 1 * ratio);
@@ -108,17 +99,12 @@
       video.pause();
     });
 
-    // ==========================================
-    // 2. ระบบบันทึกวิดีโอ (กล้อง + AR + Overlay)
-    // ==========================================
     const recordBtn = document.getElementById('recordBtn');
-    const overlayImg = document.getElementById('overlay-img');
     let mediaRecorder;
     let recordedChunks = [];
     let isRecording = false;
     let reqAnimFrameId;
 
-    // สร้าง Canvas ล่องหนเพื่อเอาภาพทุกเลเยอร์มาวาดรวมกัน
     const compCanvas = document.createElement('canvas');
     const compCtx = compCanvas.getContext('2d');
 
@@ -152,9 +138,8 @@
         ...audioTracks
       ]);
 
-      // เช็คการรองรับไฟล์วิดีโอ
       let options;
-      let fileExtension = 'webm'; // ค่าเริ่มต้น
+      let fileExtension = 'webm';
 
       if (MediaRecorder.isTypeSupported('video/mp4; codecs="avc1.42E01E, mp4a.40.2"')) {
         options = { mimeType: 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"' };
@@ -169,7 +154,7 @@
         options = { mimeType: 'video/webm' };
         fileExtension = 'webm';
       } else {
-        options = {}; // ถ้าไม่รู้จักเลย ปล่อยให้เบราว์เซอร์เลือกให้
+        options = {};
       }
 
       try {
@@ -184,13 +169,12 @@
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType });
+        const blob = new Blob(recordedChunks, { type: mediaRecorder.mimeType || 'video/mp4' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `FroGetMeNot2025-Kateaw.${fileExtension}`;
-        a.click();
-        URL.revokeObjectURL(url);
+
+        // เรียกใช้ฟังก์ชันแสดง Popup แทนการดาวน์โหลดอัตโนมัติ
+        showRecordedVideoUI(url, fileExtension);
+
         recordedChunks = [];
       };
 
@@ -199,7 +183,6 @@
       recordBtn.innerText = "หยุดบันทึก";
       recordBtn.style.backgroundColor = "#8e8e93";
 
-      // เริ่มวาดภาพทุกอย่างรวมกัน
       drawCompositeFrame(webcamVideo, aCanvas);
     }
 
@@ -216,7 +199,6 @@
 
       compCtx.clearRect(0, 0, compCanvas.width, compCanvas.height);
 
-      // เลเยอร์ 1 (ล่างสุด): ภาพจากกล้อง
       const scale = Math.max(compCanvas.width / webcamVideo.videoWidth, compCanvas.height / webcamVideo.videoHeight);
       const w = webcamVideo.videoWidth * scale;
       const h = webcamVideo.videoHeight * scale;
@@ -224,43 +206,62 @@
       const y = (compCanvas.height - h) / 2;
       compCtx.drawImage(webcamVideo, x, y, w, h);
 
-      // เลเยอร์ 2: ภาพ AR 3D และวิดีโอ
       compCtx.drawImage(aCanvas, 0, 0, compCanvas.width, compCanvas.height);
 
-      // เลเยอร์ 3: ภาพ Overlay ซ้ายบน และ ขวาล่าง
       const topImg = document.getElementById('overlay-top');
       const bottomImg = document.getElementById('overlay-bottom');
 
-      // ฟังก์ชันช่วยวาดรูปให้ตรงตำแหน่งหน้าจอเป๊ะๆ
       const drawOverlayExact = (imgElement) => {
         if (imgElement.complete && imgElement.naturalHeight !== 0) {
-          // คำนวณอัตราส่วนระหว่าง Canvas ของวิดีโอ กับ หน้าจอมือถือจริงๆ
           const scaleX = compCanvas.width / window.innerWidth;
           const scaleY = compCanvas.height / window.innerHeight;
-
-          // หาตำแหน่งและขนาดของรูปบนหน้าจอ
           const rect = imgElement.getBoundingClientRect();
-
-          // วาดลงไปในวิดีโอ
           compCtx.drawImage(
             imgElement,
-            rect.left * scaleX,
-            rect.top * scaleY,
-            rect.width * scaleX,
-            rect.height * scaleY
+            rect.left * scaleX, rect.top * scaleY, rect.width * scaleX, rect.height * scaleY
           );
         }
       };
 
-      // สั่งวาดทั้ง 2 ชิ้น
       drawOverlayExact(topImg);
       drawOverlayExact(bottomImg);
 
-      // ทำซ้ำลูป
       reqAnimFrameId = requestAnimationFrame(() => drawCompositeFrame(webcamVideo, aCanvas));
     }
 
-    // สลับการทำงานเมื่อกดปุ่ม
+    // ฟังก์ชันสำหรับสร้าง Popup บนมือถือ
+    function showRecordedVideoUI(videoUrl, fileExtension) {
+      const popup = document.createElement('div');
+      popup.style.position = 'fixed';
+      popup.style.top = '0'; popup.style.left = '0';
+      popup.style.width = '100vw'; popup.style.height = '100vh';
+      popup.style.backgroundColor = 'rgba(0,0,0,0.95)';
+      popup.style.zIndex = '9999';
+      popup.style.display = 'flex';
+      popup.style.flexDirection = 'column';
+      popup.style.justifyContent = 'center';
+      popup.style.alignItems = 'center';
+
+      popup.innerHTML = `
+        <h3 style="color: white; margin-bottom: 10px; font-family: 'Prompt', sans-serif;">ดูตัวอย่างและบันทึก</h3>
+        <video src="${videoUrl}" controls autoplay loop style="max-width: 90%; max-height: 60vh; border: 2px solid white; border-radius: 10px;"></video>
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+          <a href="${videoUrl}" download="FroGetMeNot2025-Kateaw.${fileExtension}" style="background: #007aff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 50px; font-weight: bold; font-family: 'Prompt', sans-serif;">💾 บันทึกลงเครื่อง</a>
+          <button id="closePopupBtn" style="background: #ff3b30; color: white; padding: 12px 24px; border: none; border-radius: 50px; font-weight: bold; font-size: 16px; cursor: pointer; font-family: 'Prompt', sans-serif;">❌ ปิด</button>
+        </div>
+        <p style="color: #aaa; font-size: 12px; margin-top: 15px; font-family: 'Prompt', sans-serif; text-align: center; padding: 0 20px;">
+          *บน iOS (iPhone/iPad) ให้แตะค้างที่วิดีโอแล้วเลือก "Save Video" <br> หรือ "บันทึกวิดีโอ" แทนการกดปุ่ม*
+        </p>
+      `;
+
+      document.body.appendChild(popup);
+
+      document.getElementById('closePopupBtn').addEventListener('click', () => {
+        document.body.removeChild(popup);
+        URL.revokeObjectURL(videoUrl); // คืนพื้นที่หน่วยความจำ
+      });
+    }
+
     recordBtn.addEventListener('click', () => {
       if (isRecording) stopRecording();
       else startRecording();
