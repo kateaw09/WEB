@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Links | Premium Bio</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <link rel="shortcut icon" href="/Picture/Logos/KT_LOGO_N_BG.png" type="image/x-icon">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .link-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(145deg,
+                    rgba(30, 41, 59, 0.4),
+                    rgba(15, 23, 42, 0.6));
+        }
+
+        .link-card:hover {
+            transform: translateY(-4px);
+            background: rgba(37, 99, 235, 0.2);
+            border-color: rgba(37, 99, 235, 0.5);
+            box-shadow: 0 10px 30px -10px rgba(37, 99, 235, 0.5);
+        }
+
+        .profile-glow {
+            box-shadow: 0 0 25px rgba(37, 99, 235, 0.3);
+        }
+
+        .blob {
+            position: fixed;
+            width: 300px;
+            height: 300px;
+            border-radius: 9999px;
+            filter: blur(90px);
+            z-index: -1;
+            opacity: 0.15;
+            animation: move 20s infinite alternate ease-in-out;
+        }
+
+        .blob-1 {
+            top: -80px;
+            left: -80px;
+            background: #2563eb;
+        }
+
+        .blob-2 {
+            bottom: -80px;
+            right: -80px;
+            background: #1e40af;
+            animation-delay: -5s;
+        }
+
+        @keyframes move {
+            from {
+                transform: translate(-10%, -10%) scale(1);
+            }
+
+            to {
+                transform: translate(15%, 15%) scale(1.1);
+            }
+        }
+
+        /* MOBILE FIX */
+        @media (max-width: 640px) {
+            .blob {
+                width: 220px;
+                height: 220px;
+                filter: blur(70px);
+            }
+
+            .link-card:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+
+<body
+    class="relative w-full min-h-screen overflow-x-hidden bg-[#0a0a0a] text-white flex items-center justify-center px-4 py-10 sm:px-6">
+
+    <!-- Background -->
+    <div
+        class="fixed -top-20 -left-20 w-[220px] h-[220px] sm:w-[300px] sm:h-[300px] rounded-full bg-blue-600/20 blur-[80px] pointer-events-none">
+    </div>
+
+    <div
+        class="fixed -bottom-20 -right-20 w-[220px] h-[220px] sm:w-[300px] sm:h-[300px] rounded-full bg-blue-900/20 blur-[80px] pointer-events-none">
+    </div>
+
+    <!-- Container -->
+    <main class="w-full max-w-md">
+
+        <!-- Profile -->
+        <section class="text-center mb-8 sm:mb-10">
+
+            <div class="relative inline-block">
+                <img src="/Picture/Profile/kateaw.jpg" alt="Profile"
+                    class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover mx-auto border-2 border-blue-600 p-1 shadow-[0_0_25px_rgba(37,99,235,0.3)]" />
+
+                <div class="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-green-500 border-4 border-black"></div>
+            </div>
+
+            <h1 class="mt-4 text-2xl sm:text-3xl font-bold tracking-tight">
+                Jiranuwat Sritabtim
+            </h1>
+
+            <p class="mt-2 text-sm sm:text-base text-gray-400 px-4">
+                Developer
+            </p>
+
+        </section>
+
+        <!-- Links -->
+        <section class="space-y-4">
+
+            <!-- Instagram -->
+            <a href="https://instagram.com/jiranuwat_sr" target="_blank"
+                class="w-full flex items-center rounded-2xl border border-white/5 bg-slate-900/60 backdrop-blur-md p-4 transition-all duration-300 hover:border-pink-500/50 hover:bg-pink-600/10 active:scale-[0.98]">
+
+                <div
+                    class="w-12 h-12 min-w-[48px] rounded-xl bg-pink-600/20 flex items-center justify-center text-pink-500">
+                    <i class="fab fa-instagram text-xl"></i>
+                </div>
+
+                <div class="ml-4 flex-1 min-w-0">
+                    <h3 class="truncate text-sm sm:text-base font-semibold text-gray-200">
+                        Instagram
+                    </h3>
+
+                    <p class="truncate text-xs sm:text-sm text-gray-500">
+                        Jiranuwat_sr
+                    </p>
+                </div>
+
+                <i class="fas fa-chevron-right ml-3 text-sm text-gray-600"></i>
+
+            </a>
+
+            <!-- GitHub -->
+            <a href="https://github.com/kateaw09" target="_blank"
+                class="w-full flex items-center rounded-2xl border border-white/5 bg-slate-900/60 backdrop-blur-md p-4 transition-all duration-300 hover:border-white/20 hover:bg-white/5 active:scale-[0.98]">
+
+                <div class="w-12 h-12 min-w-[48px] rounded-xl bg-white/10 flex items-center justify-center text-white">
+                    <i class="fab fa-github text-xl"></i>
+                </div>
+
+                <div class="ml-4 flex-1 min-w-0">
+                    <h3 class="truncate text-sm sm:text-base font-semibold text-gray-200">
+                        GitHub
+                    </h3>
+
+                    <p class="truncate text-xs sm:text-sm text-gray-500">
+                        Kateaw09
+                    </p>
+                </div>
+
+                <i class="fas fa-chevron-right ml-3 text-sm text-gray-600"></i>
+
+            </a>
+
+            <!-- Website -->
+            <a href="https://kateaw09.github.io/WEB" target="_blank"
+                class="w-full flex items-center rounded-2xl bg-blue-600 p-4 shadow-lg shadow-blue-600/20 transition-all duration-300 hover:bg-blue-700 active:scale-[0.98]">
+
+                <div class="w-12 h-12 min-w-[48px] rounded-xl bg-white/20 flex items-center justify-center text-white">
+                    <i class="fas fa-globe text-xl"></i>
+                </div>
+
+                <div class="ml-4 flex-1 min-w-0">
+                    <h3 class="truncate text-sm sm:text-base font-bold text-white">
+                        Official Website
+                    </h3>
+
+                    <p class="truncate text-xs sm:text-sm text-blue-100">
+                        ดูผลงานทั้งหมดของฉัน
+                    </p>
+                </div>
+
+                <i class="fas fa-external-link-alt ml-3 text-sm text-white/70"></i>
+
+            </a>
+
+        </section>
+
+        <div class="relative flex items-center py-2 my-6">
+            <div class="flex-grow border-t border-white/10"></div>
+
+            <span class="px-4 text-xs uppercase tracking-[0.3em] text-gray-500">
+                Studios
+            </span>
+
+            <div class="flex-grow border-t border-white/10"></div>
+        </div>
+
+        <!-- Links -->
+        <section class="space-y-4 mt-4">
+
+            <!-- Instagram -->
+            <a href="https://instagram.com/2ktw.studio" target="_blank"
+                class="w-full flex items-center rounded-2xl border border-white/5 bg-slate-900/60 backdrop-blur-md p-4 transition-all duration-300 hover:border-blue-500/50 hover:bg-blue-600/10 active:scale-[0.98]">
+
+                <div
+                    class="w-12 h-12 min-w-[48px] rounded-xl bg-blue-600/20 flex items-center justify-center text-pink-500 p-3">
+                    <svg xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/"
+                        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+                        xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+                        xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg"
+                        xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="svg10"
+                        inkscape:version="0.92.3 (2405546, 2018-03-11)"
+                        sodipodi:docname="Roblox_2017_O_Icon_final_-_Red.svg" x="0px" y="0px" viewBox="0 0 302.7 302.7"
+                        style="enable-background:new 0 0 302.7 302.7;" xml:space="preserve">
+                        <style type="text/css">
+                            .st0 {
+                                fill: #FFFFFF;
+                            }
+                        </style>
+                        <sodipodi:namedview bordercolor="#666666" borderopacity="1" gridtolerance="10"
+                            guidetolerance="10" id="namedview12" inkscape:current-layer="svg10" inkscape:cx="151.36"
+                            inkscape:cy="151.36" inkscape:pageopacity="0" inkscape:pageshadow="2"
+                            inkscape:window-height="1017" inkscape:window-maximized="1" inkscape:window-width="1920"
+                            inkscape:window-x="-8" inkscape:window-y="-8" inkscape:zoom="2.6030655" objecttolerance="10"
+                            pagecolor="#ffffff" showgrid="false">
+                        </sodipodi:namedview>
+                        <path id="path20" inkscape:connector-curvature="0" class="st0"
+                            d="M120.5,271.7c-110.9-28.6-120-31-119.9-31.5  C0.7,239.6,62.1,0.5,62.2,0.4c0,0,54,13.8,119.9,30.8s120,30.8,120.1,30.8c0.2,0,0.2,0.4,0.1,0.9c-0.2,1.5-61.5,239.3-61.7,239.5  C240.6,302.5,186.5,288.7,120.5,271.7z M174.9,158c3.2-12.6,5.9-23.1,6-23.4c0.1-0.5-2.3-1.2-23.2-6.6c-12.8-3.3-23.5-5.9-23.6-5.8  c-0.3,0.3-12.1,46.6-12,46.7c0.2,0.2,46.7,12.2,46.8,12.1C168.9,180.9,171.6,170.6,174.9,158L174.9,158z" />
+                    </svg>
+                </div>
+
+                <div class="ml-4 flex-1 min-w-0">
+                    <h3 class="truncate text-sm sm:text-base font-semibold text-gray-200">
+                        Roblox Studio
+                    </h3>
+
+                    <p class="truncate text-xs sm:text-sm text-gray-500">
+                        2KTW Studio
+                    </p>
+                </div>
+
+                <i class="fas fa-chevron-right ml-3 text-sm text-gray-600"></i>
+
+            </a>
+
+        </section>
+
+        <!-- Social -->
+        <footer class="mt-10 sm:mt-12">
+
+            <div class="flex items-center justify-center gap-6 text-gray-500 duration-300">
+                <a href="https://youtube.com/@jiranuwat_official"
+                    class="transition-colors hover:text-red-500 duration-300">
+                    <i class="fab fa-youtube text-xl"></i>
+                </a>
+
+                <a href="https://facebook.com/jiranuwat.sritaptim"
+                    class="transition-colors hover:text-blue-500 duration-300">
+                    <i class="fab fa-facebook text-xl"></i>
+                </a>
+            </div>
+
+            <p class="mt-8 text-center text-[10px] uppercase tracking-[0.3em] text-gray-600">
+                © 2026 KATEAW Bio
+            </p>
+
+        </footer>
+
+    </main>
+
+</body>
+
+</html>
